@@ -26,22 +26,22 @@ const RevenuePage = () => {
   return (
     <div className="space-y-8">
 
-      {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-6">
+      {/* ===== Stats Cards ===== */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card title="Total Agents" value={totalAgents} />
-        <Card title="Total Revenue" value={`₹${totalRevenue}`} />
-        <Card title="Total Expense" value={`₹${totalExpense}`} />
-        <Card title="Net Profit" value={`₹${netProfit}`} />
+        <Card title="Total Revenue" value={`₹${totalRevenue.toLocaleString()}`} />
+        <Card title="Total Expense" value={`₹${totalExpense.toLocaleString()}`} />
+        <Card title="Net Profit" value={`₹${netProfit.toLocaleString()}`} />
       </div>
 
-      {/* Chart Section */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
+      {/* ===== Chart Section ===== */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm">
         <h3 className="text-lg font-semibold mb-6">
           Agent Status Overview
         </h3>
 
         <div className="h-72">
-          <ResponsiveContainer>
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
@@ -49,7 +49,8 @@ const RevenuePage = () => {
                 outerRadius={100}
                 label
               >
-                {pieData.map((entry, index) => (
+                {/* FIXED: entry removed */}
+                {pieData.map((_, index) => (
                   <Cell
                     key={index}
                     fill={COLORS[index % COLORS.length]}
@@ -68,8 +69,13 @@ const RevenuePage = () => {
 
 export default RevenuePage;
 
-const Card = ({ title, value }: any) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm">
+interface CardProps {
+  title: string;
+  value: string | number;
+}
+
+const Card = ({ title, value }: CardProps) => (
+  <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
     <p className="text-gray-500 text-sm">{title}</p>
     <h3 className="text-2xl font-bold mt-2">{value}</h3>
   </div>
