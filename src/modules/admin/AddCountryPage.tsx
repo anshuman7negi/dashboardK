@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, ArrowLeft } from "lucide-react";
+import { Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createCountry } from "../../services/countryApi";
 
@@ -25,94 +25,83 @@ const AddCountryPage = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="relative min-h-screen -mt-6 -mx-6 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-pink-50 flex items-center justify-center">
 
-      {/* Header Section */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+      {/* Watermark Background */}
+      <div className="absolute inset-0 rotate-[-25deg] opacity-10 text-orange-600 font-extrabold pointer-events-none select-none flex flex-wrap justify-center items-center gap-24 text-[60px] sm:text-[100px]">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <span key={i}>Krowdless</span>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-2xl py-16">
+
+        {/* Header */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800">
             Add New Country
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">
             Add a new country to the Krowdless platform.
           </p>
         </div>
 
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-orange-500 transition"
-        >
-          <ArrowLeft size={18} />
-          Back
-        </button>
-      </div>
+        {/* Card */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-10">
 
-      {/* Form Card */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Country Name */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
+                Country Name
+              </label>
 
-          {/* Country Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Country Name
-            </label>
+              <div className="relative">
+                <Globe
+                  className="absolute left-4 top-4 text-gray-400"
+                  size={18}
+                />
 
-            <div className="relative">
-              <Globe
-                className="absolute left-4 top-3 text-gray-400"
-                size={18}
-              />
+                <input
+                  type="text"
+                  placeholder="India"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full border border-gray-200 pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Country Code */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
+                Country Code
+              </label>
 
               <input
                 type="text"
-                placeholder="India"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-200 pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
+                placeholder="IN"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="w-full border border-gray-200 px-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
                 required
               />
             </div>
-          </div>
 
-          {/* Country Code */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Country Code
-            </label>
-
-            <input
-              type="text"
-              placeholder="IN"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full border border-gray-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
-              required
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-4 pt-4">
-
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-
+            {/* Button */}
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-orange-500 to-pink-500 hover:opacity-90 transition shadow-md"
+              className="w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:scale-[1.02] transition shadow-lg disabled:opacity-70"
             >
               {loading ? "Creating..." : "Create Country"}
             </button>
 
-          </div>
-
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

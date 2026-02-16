@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { Globe, ImagePlus } from "lucide-react";
 import { getAllCountries } from "../../services/countryApi";
 import { createState } from "../../services/stateApi";
-
 
 const AddStatePage = () => {
   const [countries, setCountries] = useState<any[]>([]);
@@ -46,62 +46,132 @@ const AddStatePage = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white p-8 rounded-xl shadow">
-      <h2 className="text-2xl font-bold mb-6">
-        Add State
-      </h2>
+    <div className="relative min-h-screen -mt-6 -mx-6 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-pink-50 flex items-center justify-center">
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Watermark Background */}
+      <div className="absolute inset-0 rotate-[-25deg] opacity-10 text-orange-600 font-extrabold pointer-events-none select-none flex flex-wrap justify-center items-center gap-24 text-[60px] sm:text-[100px]">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <span key={i}>Krowdless</span>
+        ))}
+      </div>
 
-        <input
-          type="text"
-          placeholder="State Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border px-4 py-3 rounded-lg"
-          required
-        />
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-3xl py-16">
 
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full border px-4 py-3 rounded-lg"
-          required
-        />
+        {/* Header */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800">
+            Add New State
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">
+            Add a new tourism state with slogan and media.
+          </p>
+        </div>
 
-        <select
-          value={countryId || ""}
-          onChange={(e) =>
-            setCountryId(Number(e.target.value))
-          }
-          className="w-full border px-4 py-3 rounded-lg"
-          required
-        >
-          <option value="">Select Country</option>
-          {countries.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        {/* Glass Card */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-10">
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) =>
-            setImage(e.target.files ? e.target.files[0] : null)
-          }
-          required
-        />
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
 
-        <button
-          disabled={loading}
-          className="w-full bg-orange-500 text-white py-3 rounded-lg"
-        >
-          {loading ? "Creating..." : "Create State"}
-        </button>
-      </form>
+            {/* State Name */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                State Name
+              </label>
+
+              <input
+                type="text"
+                placeholder="Himachal Pradesh"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full border border-gray-200 px-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tourism Slogan / Description
+              </label>
+
+              <textarea
+                placeholder="Add tourism slogan of this state (e.g. 'Land of Gods')"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="w-full border border-gray-200 px-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-orange-400 focus:outline-none transition resize-none"
+                required
+              />
+            </div>
+
+            {/* Country Dropdown */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select Country
+              </label>
+
+              <div className="relative">
+                <Globe
+                  className="absolute left-4 top-4 text-gray-400"
+                  size={18}
+                />
+
+                <select
+                  value={countryId || ""}
+                  onChange={(e) =>
+                    setCountryId(
+                      e.target.value ? Number(e.target.value) : undefined
+                    )
+                  }
+                  className="w-full border border-gray-200 pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-orange-400 focus:outline-none transition bg-white"
+                  required
+                >
+                  <option value="">Select Country</option>
+                  {countries.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                State Image
+              </label>
+
+              <label className="flex items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-2xl py-6 cursor-pointer hover:border-orange-400 transition">
+                <ImagePlus size={20} className="text-gray-400" />
+                <span className="text-gray-500 text-sm">
+                  {image ? image.name : "Upload state image"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setImage(e.target.files ? e.target.files[0] : null)
+                  }
+                  className="hidden"
+                  required
+                />
+              </label>
+            </div>
+
+            {/* Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:scale-[1.02] transition shadow-lg disabled:opacity-70"
+            >
+              {loading ? "Creating..." : "Create State"}
+            </button>
+
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

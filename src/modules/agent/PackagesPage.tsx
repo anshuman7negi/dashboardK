@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const PackagesPage = () => {
-  const [packages, setPackages] = useState([
+  const [packages] = useState([
     { id: 1, name: "Goa Trip", status: "ACTIVE" },
     { id: 2, name: "Manali Tour", status: "PENDING" },
   ]);
