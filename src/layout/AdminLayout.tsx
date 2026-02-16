@@ -6,6 +6,7 @@ import {
   Globe,
   DollarSign,
   Menu,
+  MapPinned,
 } from "lucide-react";
 
 const AdminLayout = () => {
@@ -56,6 +57,18 @@ const AdminLayout = () => {
             to="/admin/destinations"
             icon={<Globe size={18} />}
             label="Destinations"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            to="/admin/states"
+            icon={<MapPinned size={18} />}
+            label="States"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            to="/admin/countries"
+            icon={<MapPinned size={18} />}
+            label="Countries"
             collapsed={collapsed}
           />
           <SidebarItem
