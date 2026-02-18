@@ -1,10 +1,27 @@
 import "./App.css";
+import { RouterProvider } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { router } from "./app/router";
 
 function App() {
   return (
-    <div className="bg-black text-white min-h-screen flex items-center justify-center text-4xl">
-      Tailwind Working
-    </div>
+    <>
+      {/* Toast Renderer */}
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            borderRadius: "10px",
+            background: "#1f2937",
+            color: "#fff",
+          },
+        }}
+      />
+
+      {/* Router */}
+      <RouterProvider router={router} />
+    </>
   );
 }
 
