@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { loginUser } from "../services/authApi";
+import { setAccessToken } from "../utils/tokenStore";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -22,7 +23,7 @@ const Login = () => {
     }
 
     try {
-            setLoading(true);
+      setLoading(true);
 
       const response = await loginUser(email, password);
 
@@ -30,11 +31,7 @@ const Login = () => {
       const roleArray = response.data.role;
 
       if (accessToken) {
-        localStorage.setItem("token", accessToken);
-      }
-
-      if (roleArray && roleArray.length > 0) {
-        localStorage.setItem("role", roleArray[0]); // 🔥 IMPORTANT
+        setAccessToken(accessToken); // 🔥 memory only
       }
 
       const role = roleArray?.[0];
