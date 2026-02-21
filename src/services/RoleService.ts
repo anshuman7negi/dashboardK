@@ -85,3 +85,15 @@ export const getRolePermissions = async (
   );
   return res.data?.data || [];
 };
+
+
+export const updateRolePermissions = async (
+  roleId: number,
+  permissionIds: number[]
+) => {
+  const response = await api.put(
+    `/api/v1/admin/roles/${roleId}/permissions`,
+    permissionIds
+  );
+  return response.data.data;
+};

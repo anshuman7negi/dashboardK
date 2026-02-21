@@ -21,6 +21,8 @@ import CreatePermissionPage from "../pages/ManageRoles/CreatePermissionPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 import RolePermissionMappingPage from "../pages/ManageRoles/RolePermissionMappingPage ";
+import { ApproveRejectDestinations } from "../pages/destinations/ApproveRejectDestinations";
+import { CreateDestinationPage } from "../pages/destinations/CreateDestinationPage";
 
 export const router = createBrowserRouter([
   {
@@ -77,6 +79,26 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <AddStatePage />
+          </ProtectedRoute>
+        ),
+      },
+
+      // Manage destinations
+
+            {
+        path: "approve-reject-destination",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
+            <ApproveRejectDestinations />
+          </ProtectedRoute>
+        ),
+      }, 
+
+       {
+        path: "create-destination",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
+            <CreateDestinationPage />
           </ProtectedRoute>
         ),
       },

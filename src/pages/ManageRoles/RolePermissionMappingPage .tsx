@@ -1,26 +1,28 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { CheckCircle2 } from "lucide-react";
 import {
   getAllRoles,
   getAllPermissions,
-  assignPermissionToRole,
   getRolePermissions,
+  updateRolePermissions,
   type RoleDto,
   type PermissionDto,
 } from "../../services/RoleService";
-import { Check } from "lucide-react";
 
 const RolePermissionMappingPage = () => {
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [permissions, setPermissions] = useState<PermissionDto[]>([]);
   const [selectedRole, setSelectedRole] = useState<number | null>(null);
-  const [assignedPermissions, setAssignedPermissions] = useState<number[]>([]);
+  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([]);
+  const [originalPermissions, setOriginalPermissions] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [roleLoading, setRoleLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  /* ================= INIT LOAD ================= */
+  /* ================= INITIAL LOAD ================= */
   useEffect(() => {
-    const init = async () => {
+    const loadData = async () => {
       try {
         const [roleData, permData] = await Promise.all([
           getAllRoles(),
@@ -34,92 +36,83 @@ const RolePermissionMappingPage = () => {
         setLoading(false);
       }
     };
-    init();
+    loadData();
   }, []);
 
-  /* ================= FETCH ROLE PERMISSIONS ================= */
+  /* ================= LOAD ROLE PERMISSIONS ================= */
   useEffect(() => {
     if (!selectedRole) return;
 
     const fetchRolePerms = async () => {
       try {
+        setRoleLoading(true);
         const data = await getRolePermissions(selectedRole);
-        setAssignedPermissions(data.map((p) => p.id));
+        const ids = data.map((p) => p.id);
+        setSelectedPermissions(ids);
+        setOriginalPermissions(ids);
       } catch {
         toast.error("Failed to fetch role permissions");
+      } finally {
+        setRoleLoading(false);
       }
     };
 
     fetchRolePerms();
   }, [selectedRole]);
 
-  /* ================= TOGGLE ================= */
-  const handleToggle = async (permissionId: number) => {
-    if (!selectedRole) {
-      toast.error("Select a role first");
-      return;
-    }
-
-    // Instant UI update (no lag feel)
-    const isAlreadyAssigned = assignedPermissions.includes(permissionId);
-
-    setAssignedPermissions((prev) =>
-      isAlreadyAssigned
+  const handleCheckboxChange = (permissionId: number) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionId)
         ? prev.filter((id) => id !== permissionId)
         : [...prev, permissionId]
     );
+  };
+
+  const hasChanges =
+    JSON.stringify([...selectedPermissions].sort()) !==
+    JSON.stringify([...originalPermissions].sort());
+
+  const handleSave = async () => {
+    if (!selectedRole) return;
 
     try {
-      setUpdatingId(permissionId);
-      await assignPermissionToRole(selectedRole, permissionId);
+      setSaving(true);
+      await updateRolePermissions(selectedRole, selectedPermissions);
+      setOriginalPermissions(selectedPermissions);
+      toast.success("Permissions updated successfully 🎉");
     } catch {
-      toast.error("Failed to update permission");
-      // rollback if API fails
-      setAssignedPermissions((prev) =>
-        isAlreadyAssigned
-          ? [...prev, permissionId]
-          : prev.filter((id) => id !== permissionId)
-      );
+      toast.error("Failed to update permissions");
     } finally {
-      setUpdatingId(null);
+      setSaving(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen -mt-6 -mx-6 px-6 py-12 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-12">
 
-      {/* Watermark */}
-      <div className="absolute inset-0 rotate-[-25deg] opacity-10 text-orange-600 font-extrabold pointer-events-none select-none flex flex-wrap justify-center items-center gap-24 text-[90px]">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <span key={i}>Krowdless</span>
-        ))}
-      </div>
-
-      <div className="relative z-10 max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-800">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-800">
             Role Permission Mapping
           </h1>
-          <p className="text-gray-500 mt-2">
-            Assign permissions to selected role
+          <p className="text-gray-500 mt-3">
+            Manage access control with precision
           </p>
         </div>
 
-        {/* ROLE SELECT (TOP FULL WIDTH) */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-200 p-8 mb-10">
+        {/* ROLE CARD */}
+        <div className="bg-white/70 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8 mb-10 transition-all">
 
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          <label className="text-sm font-semibold text-gray-600">
             Select Role
-          </h2>
+          </label>
 
           <select
             value={selectedRole ?? ""}
-            onChange={(e) =>
-              setSelectedRole(Number(e.target.value))
-            }
-            className="w-full border border-gray-300 px-5 py-3 rounded-2xl focus:ring-2 focus:ring-orange-400 outline-none transition"
+            onChange={(e) => setSelectedRole(Number(e.target.value))}
+            className="mt-3 w-full rounded-xl border border-gray-300 px-5 py-3 text-gray-700 focus:ring-2 focus:ring-orange-400 focus:outline-none transition"
           >
             <option value="">-- Select Role --</option>
             {roles.map((role) => (
@@ -128,65 +121,87 @@ const RolePermissionMappingPage = () => {
               </option>
             ))}
           </select>
-
         </div>
 
-        {/* PERMISSIONS CARD */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-200 p-10">
+        {/* PERMISSION CARD */}
+        <div className="bg-white/70 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-10 transition-all">
 
-          <h2 className="text-lg font-semibold mb-8 text-gray-800">
+          <h2 className="text-xl font-semibold text-gray-800 mb-8">
             Permissions
           </h2>
 
-          <div className="max-h-[450px] overflow-y-auto pr-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-            {/* Skeleton */}
-            {loading &&
-              Array.from({ length: 8 }).map((_, i) => (
+          {/* Skeleton */}
+          {(loading || roleLoading) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-16 rounded-2xl bg-gray-200 animate-pulse"
+                  className="h-16 rounded-xl bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse"
                 />
               ))}
+            </div>
+          )}
 
-            {/* Permission List */}
-            {!loading &&
-              permissions.map((permission) => {
-                const isAssigned =
-                  assignedPermissions.includes(permission.id);
+          {/* Permission List */}
+          {!loading && !roleLoading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-h-[420px] overflow-y-auto pr-2">
+
+              {permissions.map((permission) => {
+                const isChecked = selectedPermissions.includes(permission.id);
 
                 return (
-                  <div
+                  <label
                     key={permission.id}
-                    onClick={() => handleToggle(permission.id)}
-                    className={`cursor-pointer px-6 py-4 rounded-2xl border transition-all duration-200 flex items-center justify-between
+                    className={`group flex items-center justify-between px-6 py-4 rounded-xl border cursor-pointer transition-all duration-300
                     ${
-                      isAssigned
-                        ? "bg-orange-50 border-orange-400 shadow-sm"
-                        : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                      isChecked
+                        ? "border-green-400 bg-green-50 shadow-md"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                   >
-                    <span className="font-medium text-gray-700">
-                      {permission.name}
-                    </span>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() =>
+                          handleCheckboxChange(permission.id)
+                        }
+                        className="w-5 h-5 accent-green-500"
+                      />
+                      <span className="font-medium text-gray-700">
+                        {permission.name}
+                      </span>
+                    </div>
 
-                    {updatingId === permission.id ? (
-                      <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      isAssigned && (
-                        <Check
-                          size={18}
-                          className="text-orange-500"
-                        />
-                      )
+                    {isChecked && (
+                      <CheckCircle2
+                        size={20}
+                        className="text-green-500 transition-transform duration-300 group-hover:scale-110"
+                      />
                     )}
-                  </div>
+                  </label>
                 );
               })}
+            </div>
+          )}
 
+          {/* SAVE BUTTON */}
+          <div className="mt-10 flex justify-end">
+            <button
+              onClick={handleSave}
+              disabled={!hasChanges || saving}
+              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg
+              ${
+                !hasChanges
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:scale-105 hover:shadow-xl"
+              }`}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   );
