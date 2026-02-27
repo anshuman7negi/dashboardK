@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { MapPin, Users, Check, X } from "lucide-react";
 import toast from "react-hot-toast";
-import { approveDestinationDraft, fetchAdminDrafts, rejectDestinationDraft } from "../../services/adminDestinationApi";
-
+import {
+  approveDestinationDraft,
+  fetchAdminDrafts,
+  rejectDestinationDraft,
+} from "../../services/adminDestinationApi";
+import { useNavigate } from "react-router-dom";
 
 type Status = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -16,68 +20,51 @@ interface DraftDestination {
   status: Status;
 }
 
-const SkeletonCard = () => (
-  <div className="bg-white rounded-xl shadow animate-pulse overflow-hidden">
-    <div className="aspect-[16/9] bg-gray-200" />
-    <div className="p-4 space-y-3">
-      <div className="h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-3 bg-gray-200 rounded w-1/2" />
-      <div className="h-3 bg-gray-200 rounded w-full" />
-      <div className="flex gap-2 mt-4">
-        <div className="h-9 w-24 bg-gray-200 rounded" />
-        <div className="h-9 w-24 bg-gray-200 rounded" />
-      </div>
-    </div>
-  </div>
-);
-
-const NoImagePlaceholder = () => (
-  <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-    No Image
-  </div>
-);
-
 export const ApproveRejectDestinations: React.FC = () => {
-  const PAGE_SIZE = 10;
-
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<Status>("PENDING");
-  const [page, setPage] = useState(0);
   const [drafts, setDrafts] = useState<DraftDestination[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
-
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [resultMap, setResultMap] = useState<
     Record<number, "APPROVED" | "REJECTED">
   >({});
 
-  const loadDrafts = () => {
-  setLoading(true);
+  const navigate = useNavigate();
 
-  fetchAdminDrafts(status)
-    .then((res) => {
-      setDrafts(
-        res.map((d) => ({
-          id: d.id,
-          name: d.name,
-          stateName: "Unknown", // backend currently not sending
-          description: d.shortDescription,
-          imageUrl: d.coverImage || null,
-          crowdLevel: "MEDIUM",
-          status: d.status,
-        }))
-      );
-    })
-    .catch(() => {
-      toast.error("Failed to load drafts");
-      setDrafts([]);
-    })
-    .finally(() => setLoading(false));
-};
+  // 🔥 Reject Modal State
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectId, setRejectId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+
+  const loadDrafts = () => {
+    setLoading(true);
+
+    fetchAdminDrafts()
+      .then((res) => {
+        const filtered = res.filter((d) => d.status === status);
+
+        setDrafts(
+          filtered.map((d) => ({
+            id: d.id,
+            name: d.name,
+            stateName: "Unknown",
+            description: d.shortDescription,
+            imageUrl: d.coverImage || null,
+            crowdLevel: "MEDIUM",
+            status: d.status,
+          }))
+        );
+      })
+      .catch(() => {
+        toast.error("Failed to load drafts");
+        setDrafts([]);
+      })
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     loadDrafts();
-  }, [status, page]);
+  }, [status]);
 
   const handleApprove = async (id: number) => {
     try {
@@ -91,33 +78,56 @@ export const ApproveRejectDestinations: React.FC = () => {
         setProcessingId(null);
         setResultMap({});
         loadDrafts();
-      }, 1200);
+      }, 1000);
     } catch {
       toast.error("Approve failed");
       setProcessingId(null);
     }
   };
 
-  const handleReject = async (id: number) => {
-    const reason = prompt("Reason for rejection (optional)") || undefined;
+  const openRejectModal = (id: number) => {
+    setRejectId(id);
+    setRejectReason("");
+    setRejectModalOpen(true);
+  };
+
+  const confirmReject = async () => {
+    if (!rejectId) return;
 
     try {
-      setProcessingId(id);
-      await rejectDestinationDraft(id, reason);
+      setProcessingId(rejectId);
+      await rejectDestinationDraft(rejectId, rejectReason || undefined);
 
-      setResultMap((p) => ({ ...p, [id]: "REJECTED" }));
+      setResultMap((p) => ({ ...p, [rejectId]: "REJECTED" }));
       toast.success("Destination rejected");
+
+      setRejectModalOpen(false);
 
       setTimeout(() => {
         setProcessingId(null);
         setResultMap({});
         loadDrafts();
-      }, 1200);
+      }, 1000);
     } catch {
       toast.error("Reject failed");
       setProcessingId(null);
     }
   };
+
+  const SkeletonCard = () => (
+    <div className="bg-white rounded-xl shadow animate-pulse overflow-hidden">
+      <div className="aspect-[16/9] bg-gray-200" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-gray-200 rounded w-3/4" />
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+        <div className="h-3 bg-gray-200 rounded w-full" />
+        <div className="flex gap-2 mt-4">
+          <div className="h-9 w-24 bg-gray-200 rounded" />
+          <div className="h-9 w-24 bg-gray-200 rounded" />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <section className="py-10 bg-gray-50 min-h-screen">
@@ -135,10 +145,7 @@ export const ApproveRejectDestinations: React.FC = () => {
 
           <select
             value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as Status);
-              setPage(0);
-            }}
+            onChange={(e) => setStatus(e.target.value as Status)}
             className="border rounded-lg px-4 py-2"
           >
             <option value="PENDING">Pending</option>
@@ -159,107 +166,95 @@ export const ApproveRejectDestinations: React.FC = () => {
               No {status.toLowerCase()} destinations found
             </div>
           )}
-
-          {!loading &&
-            drafts.map((d) => (
-              <div
-                key={d.id}
-                className="relative bg-white rounded-xl shadow hover:shadow-lg overflow-hidden"
-              >
-
-                {processingId === d.id && !resultMap[d.id] && (
-                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
-                    <div className="w-10 h-10 border-4 border-gray-300 border-t-green-600 rounded-full animate-spin" />
+          { !loading && drafts.map((d) => (
+            <div
+              key={d.id}
+              className="relative bg-white rounded-xl shadow hover:shadow-lg overflow-hidden"
+            >
+              <div className="aspect-[16/9] bg-gray-100">
+                {d.imageUrl ? (
+                  <img
+                    src={d.imageUrl}
+                    alt={d.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    No Image
                   </div>
                 )}
-
-                {resultMap[d.id] === "APPROVED" && (
-                  <div className="absolute inset-0 bg-green-600/90 flex items-center justify-center z-10">
-                    <Check className="w-20 h-20 text-white" />
-                  </div>
-                )}
-
-                {resultMap[d.id] === "REJECTED" && (
-                  <div className="absolute inset-0 bg-red-600/90 flex items-center justify-center z-10">
-                    <X className="w-20 h-20 text-white" />
-                  </div>
-                )}
-
-                <div className="aspect-[16/9] bg-gray-100">
-                  {d.imageUrl ? (
-                    <img
-                      src={d.imageUrl}
-                      alt={d.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <NoImagePlaceholder />
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg truncate">{d.name}</h3>
-
-                  <p className="text-sm text-gray-600 flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {d.stateName}
-                  </p>
-
-                  <p className="text-sm mt-2">{d.description}</p>
-
-                  <div className="flex items-center gap-1 text-sm text-gray-500 mt-3">
-                    <Users className="w-4 h-4" />
-                    Crowd: {d.crowdLevel}
-                  </div>
-
-                  {status === "PENDING" && (
-                    <div className="flex gap-2 mt-4">
-                      <button
-                        disabled={processingId === d.id}
-                        onClick={() => handleApprove(d.id)}
-                        className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:opacity-50"
-                      >
-                        <Check className="inline w-4 h-4" /> Approve
-                      </button>
-
-                      <button
-                        disabled={processingId === d.id}
-                        onClick={() => handleReject(d.id)}
-                        className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 disabled:opacity-50"
-                      >
-                        <X className="inline w-4 h-4" /> Reject
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
-            ))}
+
+              <div className="p-4">
+                <h3 className="font-semibold text-lg truncate">{d.name}</h3>
+
+                <p className="text-sm text-gray-600 flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {d.stateName}
+                </p>
+
+                <p className="text-sm mt-2">{d.description}</p>
+
+                {status === "PENDING" && (
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => handleApprove(d.id)}
+                      className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                    >
+                      <Check className="inline w-4 h-4" /> Approve
+                    </button>
+
+                    <button
+                      onClick={() => openRejectModal(d.id)}
+                      className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700"
+                    >
+                      <X className="inline w-4 h-4" /> Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-
-        {!loading && totalPages > 1 && (
-          <div className="flex justify-center gap-4 mt-8">
-            <button
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-              className="px-4 py-2 border rounded disabled:opacity-40"
-            >
-              Prev
-            </button>
-
-            <span className="mt-2 text-sm">
-              Page {page + 1} of {totalPages}
-            </span>
-
-            <button
-              disabled={page + 1 >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="px-4 py-2 border rounded disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* 🔥 Professional Reject Modal */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h2 className="text-xl font-semibold mb-4">
+              Reject Destination
+            </h2>
+
+            <label className="block text-sm font-medium mb-2">
+              Reason for rejection
+            </label>
+
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Please provide a clear and professional reason..."
+              className="w-full border rounded-lg p-3 h-28 resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
+            />
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setRejectModalOpen(false)}
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmReject}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

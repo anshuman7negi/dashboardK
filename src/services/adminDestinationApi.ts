@@ -1,7 +1,6 @@
 import type { ApiResponse } from "../types/ApiResponse";
 import api from "./axios";
 
-
 /* ================= TYPES ================= */
 
 export interface AdminDraftResponse {
@@ -14,18 +13,12 @@ export interface AdminDraftResponse {
 
 /* ================= FETCH ADMIN DRAFTS ================= */
 
-export const fetchAdminDrafts = async (
-  status: string
-): Promise<AdminDraftResponse[]> => {
-
+export const fetchAdminDrafts = async (): Promise<AdminDraftResponse[]> => {
   const res = await api.get<ApiResponse<AdminDraftResponse[]>>(
-    "/api/v1/destination-drafts/admin/all",
-    {
-      params: { status }
-    }
+    "/api/v1/destination-drafts/admin/all"
   );
 
-  return res.data.data; // 🔥 wrapper se data nikala
+  return res.data.data;
 };
 
 /* ================= APPROVE ================= */
@@ -33,8 +26,8 @@ export const fetchAdminDrafts = async (
 export const approveDestinationDraft = async (
   id: number
 ): Promise<void> => {
-  await api.put(
-    `/api/v1/destination-drafts/admin/approve/${id}`
+  await api.post(
+    `/api/v1/destination-drafts/admin/${id}/approve`
   );
 };
 
@@ -42,10 +35,13 @@ export const approveDestinationDraft = async (
 
 export const rejectDestinationDraft = async (
   id: number,
-  reason?: string
+  remark?: string
 ): Promise<void> => {
-  await api.put(
-    `/api/v1/destination-drafts/admin/reject/${id}`,
-    { reason }
+  await api.post(
+    `/api/v1/destination-drafts/admin/${id}/reject`,
+    null,
+    {
+      params: { remark }
+    }
   );
 };
