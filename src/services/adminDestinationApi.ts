@@ -1,47 +1,75 @@
-import type { ApiResponse } from "../types/ApiResponse";
+
 import api from "./axios";
 
 /* ================= TYPES ================= */
 
-export interface AdminDraftResponse {
+export interface PagedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;        // current page
+  first: boolean;
+  last: boolean;
+}
+
+export interface AdminDestinationResponse {
   id: number;
   name: string;
   shortDescription: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  coverImage: string | null;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+  coverImageUrl: string | null;
+  stateName?: string;
 }
 
-/* ================= FETCH ADMIN DRAFTS ================= */
+/* ================= FETCH ADMIN DESTINATIONS ================= */
 
-export const fetchAdminDrafts = async (): Promise<AdminDraftResponse[]> => {
-  const res = await api.get<ApiResponse<AdminDraftResponse[]>>(
-    "/api/v1/destination-drafts/admin/all"
+export interface AdminDestinationFilterParams {
+  status?: string;
+  keyword?: string;
+  stateId?: number;
+  countryId?: number;
+  createdFrom?: string;
+  createdTo?: string;
+  createdBy?: string;
+  page?: number;
+  size?: number;
+}
+
+export const fetchAdminDestinations = async (
+  params: AdminDestinationFilterParams
+): Promise<PagedResponse<AdminDestinationResponse>> => {
+
+  const res = await api.get<PagedResponse<AdminDestinationResponse>>(
+    "/api/v1/admin/destinations",
+    { params }
   );
 
-  return res.data.data;
+  return res.data;
 };
 
 /* ================= APPROVE ================= */
 
-export const approveDestinationDraft = async (
+export const approveDestination = async (
   id: number
 ): Promise<void> => {
-  await api.post(
-    `/api/v1/destination-drafts/admin/${id}/approve`
+
+  await api.patch(
+    `/api/v1/admin/destinations/${id}/approve`
   );
 };
 
 /* ================= REJECT ================= */
 
-export const rejectDestinationDraft = async (
+export const rejectDestination = async (
   id: number,
-  remark?: string
+  remark: string
 ): Promise<void> => {
-  await api.post(
-    `/api/v1/destination-drafts/admin/${id}/reject`,
-    null,
+
+  await api.patch(
+    `/api/v1/admin/destinations/${id}/reject`,
     {
-      params: { remark }
+      remark  
     }
   );
 };

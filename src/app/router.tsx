@@ -23,6 +23,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import RolePermissionMappingPage from "../pages/ManageRoles/RolePermissionMappingPage ";
 import { ApproveRejectDestinations } from "../pages/destinations/ApproveRejectDestinations";
 import { CreateDestinationPage } from "../pages/destinations/CreateDestinationPage";
+import CreateDestinationCategoryPage from "../pages/destinations/CreateDestinationCategoryPage";
 
 export const router = createBrowserRouter([
   {
@@ -99,6 +100,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <CreateDestinationPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "add-destination-category",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
+            <CreateDestinationCategoryPage />
           </ProtectedRoute>
         ),
       },

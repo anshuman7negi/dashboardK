@@ -1,260 +1,367 @@
 import { useEffect, useState } from "react";
-import { MapPin, Users, Check, X } from "lucide-react";
+import { MapPin, Check, X } from "lucide-react";
 import toast from "react-hot-toast";
 import {
-  approveDestinationDraft,
-  fetchAdminDrafts,
-  rejectDestinationDraft,
+  approveDestination,
+  fetchAdminDestinations,
+  rejectDestination,
 } from "../../services/adminDestinationApi";
-import { useNavigate } from "react-router-dom";
+import { getAllCountries } from "../../services/countryApi";
+import { getStatesByCountry } from "../../services/stateApi";
 
 type Status = "PENDING" | "APPROVED" | "REJECTED";
 
-interface DraftDestination {
-  id: number;
-  name: string;
-  stateName: string;
-  description: string;
-  imageUrl: string | null;
-  crowdLevel: "LOW" | "MEDIUM" | "HIGH";
-  status: Status;
-}
-
 export const ApproveRejectDestinations: React.FC = () => {
+
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<Status>("PENDING");
-  const [drafts, setDrafts] = useState<DraftDestination[]>([]);
-  const [processingId, setProcessingId] = useState<number | null>(null);
-  const [resultMap, setResultMap] = useState<
-    Record<number, "APPROVED" | "REJECTED">
-  >({});
 
-  const navigate = useNavigate();
+  const [countries, setCountries] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
 
-  // 🔥 Reject Modal State
-  const [rejectModalOpen, setRejectModalOpen] = useState(false);
-  const [rejectId, setRejectId] = useState<number | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
+  const [countryId, setCountryId] = useState<number | undefined>();
+  const [stateId, setStateId] = useState<number | undefined>();
 
-  const loadDrafts = () => {
+  const [keyword, setKeyword] = useState("");
+  const [createdBy, setCreatedBy] = useState("");
+
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+
+  const [drafts, setDrafts] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  /* ================= LOAD COUNTRIES ================= */
+
+  useEffect(() => {
+    getAllCountries().then((res) => {
+      setCountries(res);
+
+      const india = res.find((c: any) =>
+        c.name.toLowerCase() === "india"
+      );
+
+      if (india) {
+        setCountryId(india.id);
+      }
+    });
+  }, []);
+
+  /* ================= LOAD STATES ================= */
+
+  useEffect(() => {
+    if (!countryId) return;
+
+    getStatesByCountry(countryId).then((res) => {
+      setStates(res);
+      setStateId(undefined); // default all
+    });
+  }, [countryId]);
+
+  /* ================= LOAD DESTINATIONS ================= */
+
+  const loadDestinations = () => {
     setLoading(true);
 
-    fetchAdminDrafts()
+    fetchAdminDestinations({
+      status,
+      keyword: keyword || undefined,
+      countryId,
+      stateId,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined,
+      createdBy: createdBy || undefined,
+      page,
+      size: 10,
+    })
       .then((res) => {
-        const filtered = res.filter((d) => d.status === status);
-
-        setDrafts(
-          filtered.map((d) => ({
-            id: d.id,
-            name: d.name,
-            stateName: "Unknown",
-            description: d.shortDescription,
-            imageUrl: d.coverImage || null,
-            crowdLevel: "MEDIUM",
-            status: d.status,
-          }))
-        );
+        setDrafts(res.content);
+        setTotalPages(res.totalPages);
       })
       .catch(() => {
-        toast.error("Failed to load drafts");
-        setDrafts([]);
+        toast.error("Failed to load destinations");
       })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    loadDrafts();
-  }, [status]);
+    loadDestinations();
+  }, [status, page, countryId, stateId]);
+
+  /* ================= APPROVE ================= */
 
   const handleApprove = async (id: number) => {
-    try {
-      setProcessingId(id);
-      await approveDestinationDraft(id);
-
-      setResultMap((p) => ({ ...p, [id]: "APPROVED" }));
-      toast.success("Destination approved");
-
-      setTimeout(() => {
-        setProcessingId(null);
-        setResultMap({});
-        loadDrafts();
-      }, 1000);
-    } catch {
-      toast.error("Approve failed");
-      setProcessingId(null);
-    }
+    await approveDestination(id);
+    toast.success("Approved");
+    loadDestinations();
   };
 
-  const openRejectModal = (id: number) => {
-    setRejectId(id);
-    setRejectReason("");
-    setRejectModalOpen(true);
+  /* ================= REJECT ================= */
+
+  const handleReject = async (id: number) => {
+    const reason = prompt("Enter rejection reason:");
+    if (!reason) return;
+
+    await rejectDestination(id, reason);
+    toast.success("Rejected");
+    loadDestinations();
   };
-
-  const confirmReject = async () => {
-    if (!rejectId) return;
-
-    try {
-      setProcessingId(rejectId);
-      await rejectDestinationDraft(rejectId, rejectReason || undefined);
-
-      setResultMap((p) => ({ ...p, [rejectId]: "REJECTED" }));
-      toast.success("Destination rejected");
-
-      setRejectModalOpen(false);
-
-      setTimeout(() => {
-        setProcessingId(null);
-        setResultMap({});
-        loadDrafts();
-      }, 1000);
-    } catch {
-      toast.error("Reject failed");
-      setProcessingId(null);
-    }
-  };
-
-  const SkeletonCard = () => (
-    <div className="bg-white rounded-xl shadow animate-pulse overflow-hidden">
-      <div className="aspect-[16/9] bg-gray-200" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-3 bg-gray-200 rounded w-1/2" />
-        <div className="h-3 bg-gray-200 rounded w-full" />
-        <div className="flex gap-2 mt-4">
-          <div className="h-9 w-24 bg-gray-200 rounded" />
-          <div className="h-9 w-24 bg-gray-200 rounded" />
-        </div>
-      </div>
-    </div>
-  );
 
   return (
-    <section className="py-10 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="py-10 bg-gray-100 min-h-screen">
+      <div className="max-w-7xl mx-auto px-6">
 
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">
-              Destinations suggested by users
-            </h1>
-            <p className="text-gray-600">
-              Review & approve user submissions
-            </p>
-          </div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">
+            Admin Destination Review
+          </h1>
 
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Status)}
-            className="border rounded-lg px-4 py-2"
+          {/* FILTER TOGGLE BUTTON */}
+          <button
+            onClick={() => setFilterOpen((p) => !p)}
+            className="px-5 py-2 bg-blue-600 text-white rounded-full shadow hover:scale-105 transition"
           >
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
+            Filters
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* ================= FILTER PANEL ================= */}
+        {filterOpen && (
+          <div className="bg-white/80 backdrop-blur-md border border-gray-200 p-8 rounded-3xl shadow-xl mb-10 animate-fadeIn">
 
-          {loading &&
-            Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+              {/* ===== LEFT SIDE ===== */}
+              <div className="space-y-6">
+
+                <div>
+                  <label className="label">Status</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as Status)}
+                    className="select"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Country</label>
+                    <select
+                      value={countryId}
+                      onChange={(e) => setCountryId(Number(e.target.value))}
+                      className="select"
+                    >
+                      {countries.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="label">State</label>
+                    <select
+                      value={stateId || ""}
+                      onChange={(e) =>
+                        setStateId(e.target.value ? Number(e.target.value) : undefined)
+                      }
+                      className="select"
+                    >
+                      <option value="">All States</option>
+                      {states.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* ===== RIGHT SIDE ===== */}
+              <div className="space-y-6">
+
+                <div>
+                  <label className="label">Destination Name</label>
+                  <input
+                    type="text"
+                    placeholder="Search destination..."
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    className="input"
+                  />
+                </div>
+
+                <div>
+                  <label className="label">Created By</label>
+                  <input
+                    type="text"
+                    placeholder="Enter username..."
+                    value={createdBy}
+                    onChange={(e) => setCreatedBy(e.target.value)}
+                    className="input"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Created From</label>
+                    <input
+                      type="date"
+                      value={createdFrom}
+                      onChange={(e) => setCreatedFrom(e.target.value)}
+                      className="input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label">Created To</label>
+                    <input
+                      type="date"
+                      value={createdTo}
+                      onChange={(e) => setCreatedTo(e.target.value)}
+                      className="input"
+                    />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* ===== ACTION BUTTONS ===== */}
+            <div className="flex justify-end gap-4 mt-8">
+              <button
+                onClick={() => {
+                  setKeyword("");
+                  setCreatedBy("");
+                  setStateId(undefined);
+                  setCreatedFrom("");
+                  setCreatedTo("");
+                }}
+                className="px-6 py-2 rounded-full border border-gray-300 hover:bg-gray-100 transition"
+              >
+                Reset
+              </button>
+
+              <button
+                onClick={() => {
+                  setPage(0);
+                  loadDestinations();
+                }}
+                className="px-8 py-2 rounded-full bg-blue-600 text-white shadow-md hover:shadow-xl hover:scale-105 transition"
+              >
+                Apply Filters
+              </button>
+            </div>
+
+          </div>
+        )}
+        {/* ================= DESTINATION GRID ================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          {loading && <div>Loading...</div>}
 
           {!loading && drafts.length === 0 && (
-            <div className="col-span-full text-center text-gray-500 py-20">
-              No {status.toLowerCase()} destinations found
+            <div className="col-span-full flex flex-col items-center justify-center py-24 text-gray-500 animate-fadeIn">
+              <div className="text-6xl mb-4">📭</div>
+              <p className="text-xl font-medium">
+                No data found
+              </p>
+              <p className="text-sm">
+                Try adjusting filters or check later.
+              </p>
             </div>
           )}
-          { !loading && drafts.map((d) => (
-            <div
-              key={d.id}
-              className="relative bg-white rounded-xl shadow hover:shadow-lg overflow-hidden"
+
+          {!loading &&
+            drafts.map((d) => (
+              <div
+                key={d.id}
+                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden hover:-translate-y-1"
+              >
+                <div className="aspect-[16/9] bg-gray-200 overflow-hidden">
+                  {d.coverImageUrl && (
+                    <img
+                      src={d.coverImageUrl}
+                      alt={d.name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+
+                <div className="p-5">
+                  <h3 className="font-semibold text-xl mb-1">
+                    {d.name}
+                  </h3>
+
+                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    {d.stateName}
+                  </p>
+
+                  <p className="text-sm mt-3 text-gray-700">
+                    {d.shortDescription}
+                  </p>
+
+                  {status === "PENDING" && (
+                    <div className="flex gap-3 mt-5">
+                      <button
+                        onClick={() => handleApprove(d.id)}
+                        className="flex-1 bg-green-600 text-white py-2 rounded-xl hover:scale-105 transition"
+                      >
+                        <Check className="inline w-4 h-4" /> Approve
+                      </button>
+
+                      <button
+                        onClick={() => handleReject(d.id)}
+                        className="flex-1 bg-red-600 text-white py-2 rounded-xl hover:scale-105 transition"
+                      >
+                        <X className="inline w-4 h-4" /> Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+        </div>
+
+        {/* ================= PAGINATION ================= */}
+        {!loading && drafts.length > 0 && totalPages > 1 && (
+          <div className="flex justify-center mt-12 gap-4 items-center">
+
+            <button
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+              className="w-12 h-12 rounded-full bg-white shadow hover:bg-gray-100 transition disabled:opacity-40"
             >
-              <div className="aspect-[16/9] bg-gray-100">
-                {d.imageUrl ? (
-                  <img
-                    src={d.imageUrl}
-                    alt={d.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">
-                    No Image
-                  </div>
-                )}
-              </div>
+              ←
+            </button>
 
-              <div className="p-4">
-                <h3 className="font-semibold text-lg truncate">{d.name}</h3>
-
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {d.stateName}
-                </p>
-
-                <p className="text-sm mt-2">{d.description}</p>
-
-                {status === "PENDING" && (
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => handleApprove(d.id)}
-                      className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700"
-                    >
-                      <Check className="inline w-4 h-4" /> Approve
-                    </button>
-
-                    <button
-                      onClick={() => openRejectModal(d.id)}
-                      className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700"
-                    >
-                      <X className="inline w-4 h-4" /> Reject
-                    </button>
-                  </div>
-                )}
-              </div>
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-600 text-white font-semibold shadow">
+              {page + 1}
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* 🔥 Professional Reject Modal */}
-      {rejectModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-            <h2 className="text-xl font-semibold mb-4">
-              Reject Destination
-            </h2>
+            <button
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="w-12 h-12 rounded-full bg-white shadow hover:bg-gray-100 transition disabled:opacity-40"
+            >
+              →
+            </button>
 
-            <label className="block text-sm font-medium mb-2">
-              Reason for rejection
-            </label>
-
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Please provide a clear and professional reason..."
-              className="w-full border rounded-lg p-3 h-28 resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
-            />
-
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setRejectModalOpen(false)}
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={confirmReject}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
-              >
-                Confirm Reject
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </section>
   );
 };

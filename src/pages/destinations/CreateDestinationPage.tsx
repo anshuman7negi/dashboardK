@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, MapPin } from "lucide-react";
 import { getAllCountries, type CountryDto } from "../../services/countryApi";
 import { getStatesByCountry, type StateDto } from "../../services/stateApi";
-import { createDestinationDraft } from "../../services/DestinationDraftApi";
+import { getAllCategories, type CategoryDto } from "../../services/CategoryService";
+import { createDestination } from "../../services/destinationApi";
+
 
 export const CreateDestinationPage: React.FC = () => {
+
   /* ================= DATA ================= */
   const [countries, setCountries] = useState<CountryDto[]>([]);
   const [states, setStates] = useState<StateDto[]>([]);
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
 
   const [loadingCountries, setLoadingCountries] = useState(true);
   const [loadingStates, setLoadingStates] = useState(false);
@@ -32,21 +37,26 @@ export const CreateDestinationPage: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
-  /* ================= LOAD COUNTRIES ================= */
+  /* ================= LOAD MASTER DATA ================= */
   useEffect(() => {
-    const loadCountries = async () => {
+    const loadData = async () => {
       try {
         setLoadingCountries(true);
-        const data = await getAllCountries();
-        setCountries(data);
+        const [countryData, categoryData] = await Promise.all([
+          getAllCountries(),
+          getAllCategories(),
+        ]);
+
+        setCountries(countryData);
+        setCategories(categoryData);
       } catch (error) {
-        console.error("Failed to load countries", error);
+        console.error("Failed to load master data", error);
       } finally {
         setLoadingCountries(false);
       }
     };
 
-    loadCountries();
+    loadData();
   }, []);
 
   /* ================= LOAD STATES ================= */
@@ -71,19 +81,11 @@ export const CreateDestinationPage: React.FC = () => {
     loadStates();
   }, [form.countryId]);
 
-  /* ================= CLEANUP OBJECT URL ================= */
-  useEffect(() => {
-    return () => {
-      previews.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [previews]);
-
   /* ================= IMAGE HANDLER ================= */
   const handleImageChange = (files: FileList | null) => {
     if (!files) return;
 
     const selected = Array.from(files).slice(0, 5 - images.length);
-
     const newPreviews = selected.map((file) =>
       URL.createObjectURL(file)
     );
@@ -94,7 +96,6 @@ export const CreateDestinationPage: React.FC = () => {
 
   const removeImage = (index: number) => {
     URL.revokeObjectURL(previews[index]);
-
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
@@ -105,7 +106,9 @@ export const CreateDestinationPage: React.FC = () => {
       !form.countryId ||
       !form.stateId ||
       !form.name ||
-      !form.shortDescription
+      !form.shortDescription ||
+      !form.latitude ||
+      !form.longitude
     ) {
       alert("Please fill required fields");
       return;
@@ -114,21 +117,19 @@ export const CreateDestinationPage: React.FC = () => {
     try {
       setSubmitting(true);
 
-      await createDestinationDraft(
+      await createDestination(
         {
           stateId: form.stateId,
+          countryId: form.countryId,
           name: form.name,
           shortDescription: form.shortDescription,
           fullDescription: form.fullDescription,
           address: form.address,
           pincode: form.pincode,
           youtubeVideoUrl: form.youtubeVideoUrl,
-          latitude: form.latitude
-            ? Number(form.latitude)
-            : undefined,
-          longitude: form.longitude
-            ? Number(form.longitude)
-            : undefined,
+          latitude: Number(form.latitude),
+          longitude: Number(form.longitude),
+          categoryIds: selectedCategories,
         },
         images
       );
@@ -136,7 +137,6 @@ export const CreateDestinationPage: React.FC = () => {
       setSuccess(true);
       setSubmitting(false);
 
-      // Reset
       setForm({
         countryId: 0,
         stateId: 0,
@@ -150,11 +150,13 @@ export const CreateDestinationPage: React.FC = () => {
         youtubeVideoUrl: "",
       });
 
+      setSelectedCategories([]);
       setImages([]);
       setPreviews([]);
       setFormKey((k) => k + 1);
 
       setTimeout(() => setSuccess(false), 2000);
+
     } catch (e) {
       console.error(e);
       setSubmitting(false);
@@ -165,7 +167,6 @@ export const CreateDestinationPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
       <div className="max-w-5xl mx-auto">
 
-        {/* HEADER */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-800">
             Add a Destination
@@ -175,67 +176,86 @@ export const CreateDestinationPage: React.FC = () => {
           </p>
         </div>
 
-        {/* CARD */}
         <div
           key={formKey}
           className="bg-white shadow-xl rounded-2xl border border-gray-200 p-8 space-y-8"
         >
 
-          {/* LOCATION */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">
-              Location Selection
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-6">
-
-              <select
-                className="input-style"
-                value={form.countryId}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    countryId: Number(e.target.value),
-                    stateId: 0,
-                  })
-                }
-              >
-                <option value={0}>
-                  {loadingCountries
-                    ? "Loading countries..."
-                    : "Select country *"}
+          {/* LOCATION SELECT */}
+          <section className="grid md:grid-cols-2 gap-6">
+            <select
+              className="input-style"
+              value={form.countryId}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  countryId: Number(e.target.value),
+                  stateId: 0,
+                })
+              }
+            >
+              <option value={0}>
+                {loadingCountries ? "Loading countries..." : "Select country *"}
+              </option>
+              {countries.map((country) => (
+                <option key={country.id} value={country.id}>
+                  {country.name}
                 </option>
-                {countries.map((country) => (
-                  <option key={country.id} value={country.id}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
+              ))}
+            </select>
 
-              <select
-                className="input-style"
-                value={form.stateId}
-                disabled={!form.countryId || loadingStates}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    stateId: Number(e.target.value),
-                  })
-                }
-              >
-                <option value={0}>
-                  {!form.countryId
-                    ? "Select country first"
-                    : loadingStates
+            <select
+              className="input-style"
+              value={form.stateId}
+              disabled={!form.countryId || loadingStates}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  stateId: Number(e.target.value),
+                })
+              }
+            >
+              <option value={0}>
+                {!form.countryId
+                  ? "Select country first"
+                  : loadingStates
                     ? "Loading states..."
                     : "Select state *"}
+              </option>
+              {states.map((state) => (
+                <option key={state.id} value={state.id}>
+                  {state.name}
                 </option>
-                {states.map((state) => (
-                  <option key={state.id} value={state.id}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
+              ))}
+            </select>
+          </section>
+
+          {/* CATEGORY SELECT */}
+          <section>
+            <p className="text-sm font-medium mb-2">Select Categories</p>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => {
+                const isSelected = selectedCategories.includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedCategories((prev) =>
+                        isSelected
+                          ? prev.filter((id) => id !== cat.id)
+                          : [...prev, cat.id]
+                      )
+                    }
+                    className={`px-3 py-1.5 rounded-full text-sm border transition ${isSelected
+                      ? "bg-orange-500 text-white border-orange-500"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-orange-400"
+                      }`}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
             </div>
           </section>
 
@@ -244,9 +264,7 @@ export const CreateDestinationPage: React.FC = () => {
             placeholder="Destination name *"
             className="input-style w-full"
             value={form.name}
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
 
           <textarea
@@ -255,10 +273,7 @@ export const CreateDestinationPage: React.FC = () => {
             className="input-style w-full"
             value={form.shortDescription}
             onChange={(e) =>
-              setForm({
-                ...form,
-                shortDescription: e.target.value,
-              })
+              setForm({ ...form, shortDescription: e.target.value })
             }
           />
 
@@ -268,12 +283,65 @@ export const CreateDestinationPage: React.FC = () => {
             className="input-style w-full"
             value={form.fullDescription}
             onChange={(e) =>
-              setForm({
-                ...form,
-                fullDescription: e.target.value,
-              })
+              setForm({ ...form, fullDescription: e.target.value })
             }
           />
+
+          {/* ADDRESS + PINCODE + YOUTUBE */}
+          <div className="grid md:grid-cols-3 gap-6">
+            <input
+              placeholder="Address"
+              className="input-style"
+              value={form.address}
+              onChange={(e) =>
+                setForm({ ...form, address: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Pincode"
+              className="input-style"
+              value={form.pincode}
+              onChange={(e) =>
+                setForm({ ...form, pincode: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="YouTube Video URL"
+              className="input-style"
+              value={form.youtubeVideoUrl}
+              onChange={(e) =>
+                setForm({ ...form, youtubeVideoUrl: e.target.value })
+              }
+            />
+          </div>
+
+          {/* LAT LONG */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <input
+              placeholder="Latitude"
+              className="input-style"
+              value={form.latitude}
+              onChange={(e) =>
+                setForm({ ...form, latitude: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Longitude"
+              className="input-style"
+              value={form.longitude}
+              onChange={(e) =>
+                setForm({ ...form, longitude: e.target.value })
+              }
+            />
+          </div>
+
+          <p className="text-xs text-gray-500 flex items-center gap-1">
+            <MapPin className="w-4 h-4" />
+            Copy coordinates from Google Maps
+          </p>
 
           {/* IMAGES */}
           <section>
@@ -283,15 +351,11 @@ export const CreateDestinationPage: React.FC = () => {
 
             <div className="flex flex-wrap gap-4 mb-4">
               {previews.map((src, i) => (
-                <div
-                  key={i}
-                  className="relative group w-28 h-28"
-                >
+                <div key={i} className="relative group w-28 h-28">
                   <img
                     src={src}
                     className="w-full h-full object-cover rounded-xl shadow-md border"
                   />
-
                   <button
                     type="button"
                     onClick={() => removeImage(i)}
@@ -326,31 +390,13 @@ export const CreateDestinationPage: React.FC = () => {
             <button
               disabled={submitting}
               onClick={handleSubmit}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-green-600 text-white font-semibold shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
+              className="px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-green-600 text-white font-semibold shadow-lg hover:scale-105 transition disabled:opacity-50"
             >
-              {submitting
-                ? "Submitting..."
-                : "Submit for Review"}
+              {submitting ? "Submitting..." : "Submit for Review"}
             </button>
           </div>
         </div>
       </div>
-
-      {/* LOADER */}
-      {submitting && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="w-14 h-14 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* SUCCESS */}
-      {success && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="w-28 h-28 bg-green-500 rounded-full flex items-center justify-center text-white text-4xl shadow-xl animate-bounce">
-            ✓
-          </div>
-        </div>
-      )}
     </div>
   );
 };

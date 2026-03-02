@@ -94,7 +94,7 @@ const AdminLayout = () => {
 
           {/* Destinations */}
           <DropdownMenu
-            label="Destinations"
+            label="Manage Destinations"
             icon={<Globe size={18} />}
             isOpen={openMenu === "dest"}
             toggle={() => toggleMenu("dest")}
@@ -102,11 +102,12 @@ const AdminLayout = () => {
             <SubItem to="/admin/create-destination" label="Create Destination" />
             <SubItem to="/admin/add-destination" label="Add Destination" />
             <SubItem to="/admin/approve-reject-destination" label="Destination Moderation" />
+            <SubItem to="/admin/add-destination-category" label="Destination Category" />
           </DropdownMenu>
 
           {/* States */}
           <DropdownMenu
-            label="States"
+            label="Manage States"
             icon={<MapPinned size={18} />}
             isOpen={openMenu === "states"}
             toggle={() => toggleMenu("states")}
@@ -117,7 +118,7 @@ const AdminLayout = () => {
 
           {/* Countries */}
           <DropdownMenu
-            label="Countries"
+            label="Manage Countries"
             icon={<MapPinned size={18} />}
             isOpen={openMenu === "countries"}
             toggle={() => toggleMenu("countries")}
