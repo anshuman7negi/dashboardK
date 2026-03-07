@@ -4,7 +4,6 @@ import {
     Star,
     MapPin
 } from "lucide-react";
-import { CloudSun, Wind } from "lucide-react";
 import { DestinationReviews } from "../review/DestinationReviews";
 import { approveDestination, fetchDestinationDetail, rejectDestination, type DestinationDetailResponse } from "../../services/adminDestinationApi";
 import toast from "react-hot-toast";
