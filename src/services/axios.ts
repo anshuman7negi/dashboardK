@@ -30,7 +30,7 @@ api.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          "http://localhost:8082/api/v1/auth/refresh",
+          "https://krowdless-tech-backend.onrender.com/api/v1/auth/refresh",
           {},
           { withCredentials: true }
         );
@@ -44,7 +44,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (err) {
         clearAccessToken();
-        window.location.href = "/login";
+        window.location.href = "/";
       }
     }
 

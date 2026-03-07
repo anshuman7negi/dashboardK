@@ -11,18 +11,6 @@ export interface DestinationListResponse {
   rating?: number;
 }
 
-export interface DestinationDetailResponse {
-  id: number;
-  name: string;
-  shortDescription: string;
-  fullDescription: string;
-  address?: string;
-  pincode?: string;
-  latitude?: number;
-  longitude?: number;
-  youtubeVideoUrl?: string;
-  images: string[];
-}
 
 /* ================= CREATE ================= */
 

@@ -8,6 +8,7 @@ import {
 } from "../../services/adminDestinationApi";
 import { getAllCountries } from "../../services/countryApi";
 import { getStatesByCountry } from "../../services/stateApi";
+import { useNavigate } from "react-router-dom";
 
 type Status = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -33,6 +34,7 @@ export const ApproveRejectDestinations: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
 
   const [filterOpen, setFilterOpen] = useState(false);
+  const navigate = useNavigate();
 
   /* ================= LOAD COUNTRIES ================= */
 
@@ -286,6 +288,7 @@ export const ApproveRejectDestinations: React.FC = () => {
             drafts.map((d) => (
               <div
                 key={d.id}
+                onClick={() => navigate(`/admin/destination/${d.id}`)}
                 className="bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden hover:-translate-y-1"
               >
                 <div className="aspect-[16/9] bg-gray-200 overflow-hidden">
@@ -315,14 +318,20 @@ export const ApproveRejectDestinations: React.FC = () => {
                   {status === "PENDING" && (
                     <div className="flex gap-3 mt-5">
                       <button
-                        onClick={() => handleApprove(d.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApprove(d.id);
+                        }}
                         className="flex-1 bg-green-600 text-white py-2 rounded-xl hover:scale-105 transition"
                       >
                         <Check className="inline w-4 h-4" /> Approve
                       </button>
 
                       <button
-                        onClick={() => handleReject(d.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReject(d.id);
+                        }}
                         className="flex-1 bg-red-600 text-white py-2 rounded-xl hover:scale-105 transition"
                       >
                         <X className="inline w-4 h-4" /> Reject

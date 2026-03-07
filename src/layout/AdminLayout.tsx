@@ -100,7 +100,6 @@ const AdminLayout = () => {
             toggle={() => toggleMenu("dest")}
           >
             <SubItem to="/admin/create-destination" label="Create Destination" />
-            <SubItem to="/admin/add-destination" label="Add Destination" />
             <SubItem to="/admin/approve-reject-destination" label="Destination Moderation" />
             <SubItem to="/admin/add-destination-category" label="Destination Category" />
           </DropdownMenu>

@@ -73,3 +73,32 @@ export const rejectDestination = async (
     }
   );
 };
+
+
+export interface DestinationDetailResponse {
+  id: number;
+  name: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  shortDescription: string;
+  fullDescription: string;
+  address?: string;
+  pincode?: string;
+  latitude?: number;
+  longitude?: number;
+  youtubeVideoUrl?: string;
+  images: string[];
+  adminRemark: string;
+  averageRating: number;
+  reviewCount: number;
+}
+
+export const fetchDestinationDetail = async (
+  id: number
+): Promise<DestinationDetailResponse> => {
+
+  const res = await api.get<DestinationDetailResponse>(
+    `/api/v1/destinations/${id}`
+  );
+
+  return res.data;
+};
