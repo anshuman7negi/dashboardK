@@ -387,6 +387,11 @@ export const CreateDestinationPage: React.FC = () => {
 
           {/* SUBMIT */}
           <div className="flex justify-end pt-6 border-t">
+            {success && (
+              <div className="p-3 rounded-lg bg-green-100 text-green-700 border border-green-300">
+                Destination submitted successfully 🎉
+              </div>
+            )}
             <button
               disabled={submitting}
               onClick={handleSubmit}
