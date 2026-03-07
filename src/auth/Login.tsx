@@ -36,6 +36,8 @@ const Login = () => {
 
       const role = roleArray?.[0];
 
+      localStorage.setItem("role", role);
+
       if (role === "ROLE_ADMIN" || role === "ROLE_SUPPORT_ADMIN") {
         navigate("/admin");
       } else if (role === "ROLE_AGENT") {
