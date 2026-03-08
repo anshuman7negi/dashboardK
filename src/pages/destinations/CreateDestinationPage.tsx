@@ -13,6 +13,7 @@ export const CreateDestinationPage: React.FC = () => {
   const [states, setStates] = useState<StateDto[]>([]);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [errors, setErrors] = useState<any>({});
 
   const [loadingCountries, setLoadingCountries] = useState(true);
   const [loadingStates, setLoadingStates] = useState(false);
@@ -100,19 +101,46 @@ export const CreateDestinationPage: React.FC = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const validateForm = () => {
+    const newErrors: any = {};
+
+    if (!form.countryId) newErrors.countryId = "Country is required";
+    if (!form.stateId) newErrors.stateId = "State is required";
+
+    if (!form.name.trim()) newErrors.name = "Destination name is required";
+
+    const shortWords = form.shortDescription.trim().split(/\s+/);
+    if (!form.shortDescription.trim())
+      newErrors.shortDescription = "Short description is required";
+    else if (shortWords.length > 10)
+      newErrors.shortDescription = "Maximum 10 words allowed";
+
+    const fullWords = form.fullDescription.trim().split(/\s+/);
+    if (!form.fullDescription.trim())
+      newErrors.fullDescription = "Full description is required";
+    else if (fullWords.length < 50)
+      newErrors.fullDescription = "Minimum 50 words required";
+
+    if (!form.address.trim()) newErrors.address = "Address is required";
+    if (!form.pincode.trim()) newErrors.pincode = "Pincode is required";
+
+    if (!form.latitude) newErrors.latitude = "Latitude required";
+    if (!form.longitude) newErrors.longitude = "Longitude required";
+
+    if (selectedCategories.length === 0)
+      newErrors.categories = "Select at least one category";
+
+    if (images.length === 0)
+      newErrors.images = "Upload at least one image";
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
   /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
-    if (
-      !form.countryId ||
-      !form.stateId ||
-      !form.name ||
-      !form.shortDescription ||
-      !form.latitude ||
-      !form.longitude
-    ) {
-      alert("Please fill required fields");
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setSubmitting(true);
@@ -183,56 +211,87 @@ export const CreateDestinationPage: React.FC = () => {
 
           {/* LOCATION SELECT */}
           <section className="grid md:grid-cols-2 gap-6">
-            <select
-              className="input-style"
-              value={form.countryId}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  countryId: Number(e.target.value),
-                  stateId: 0,
-                })
-              }
-            >
-              <option value={0}>
-                {loadingCountries ? "Loading countries..." : "Select country *"}
-              </option>
-              {countries.map((country) => (
-                <option key={country.id} value={country.id}>
-                  {country.name}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Country <span className="text-red-500">*</span>
+              </label>
 
-            <select
-              className="input-style"
-              value={form.stateId}
-              disabled={!form.countryId || loadingStates}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  stateId: Number(e.target.value),
-                })
-              }
-            >
-              <option value={0}>
-                {!form.countryId
-                  ? "Select country first"
-                  : loadingStates
-                    ? "Loading states..."
-                    : "Select state *"}
-              </option>
-              {states.map((state) => (
-                <option key={state.id} value={state.id}>
-                  {state.name}
+              <select
+                className={`input-style w-full ${errors.countryId ? "border-red-500" : ""}`}
+                value={form.countryId}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    countryId: Number(e.target.value),
+                    stateId: 0,
+                  })
+                }
+              >
+                <option value={0}>
+                  {loadingCountries ? "Loading countries..." : "Select country"}
                 </option>
-              ))}
-            </select>
+
+                {countries.map((country) => (
+                  <option key={country.id} value={country.id}>
+                    {country.name}
+                  </option>
+                ))}
+
+              </select>
+
+              {errors.countryId && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.countryId}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                State <span className="text-red-500">*</span>
+              </label>
+
+              <select
+                className={`input-style w-full ${errors.stateId ? "border-red-500" : ""}`}
+                value={form.stateId}
+                disabled={!form.countryId || loadingStates}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    stateId: Number(e.target.value),
+                  })
+                }
+              >
+
+                <option value={0}>
+                  {!form.countryId
+                    ? "Select country first"
+                    : loadingStates
+                      ? "Loading states..."
+                      : "Select state"}
+                </option>
+
+                {states.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.name}
+                  </option>
+                ))}
+
+              </select>
+
+              {errors.stateId && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.stateId}
+                </p>
+              )}
+            </div>
           </section>
 
           {/* CATEGORY SELECT */}
           <section>
-            <p className="text-sm font-medium mb-2">Select Categories</p>
+            <label className="text-sm font-medium mb-2 block">
+              Select Categories <span className="text-red-500">*</span>
+            </label>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => {
                 const isSelected = selectedCategories.includes(cat.id);
@@ -258,54 +317,127 @@ export const CreateDestinationPage: React.FC = () => {
               })}
             </div>
           </section>
+          {errors.categories && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.categories}
+            </p>
+          )}
 
           {/* BASIC INFO */}
-          <input
-            placeholder="Destination name *"
-            className="input-style w-full"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Destination Name <span className="text-red-500">*</span>
+            </label>
 
-          <textarea
-            placeholder="Short description *"
-            rows={3}
-            className="input-style w-full"
-            value={form.shortDescription}
-            onChange={(e) =>
-              setForm({ ...form, shortDescription: e.target.value })
-            }
-          />
+            <input
+              className={`input-style w-full ${errors.name ? "border-red-500" : ""}`}
+              value={form.name}
+              onChange={(e) =>
+                setForm({ ...form, name: e.target.value })
+              }
+            />
 
-          <textarea
-            placeholder="Full description"
-            rows={5}
-            className="input-style w-full"
-            value={form.fullDescription}
-            onChange={(e) =>
-              setForm({ ...form, fullDescription: e.target.value })
-            }
-          />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.name}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Short Description <span className="text-red-500">*</span>
+            </label>
+
+            <textarea
+              rows={2}
+              className={`input-style w-full ${errors.shortDescription ? "border-red-500" : ""}`}
+              value={form.shortDescription}
+              onChange={(e) => {
+                const words = e.target.value.trim().split(/\s+/);
+                if (words.length <= 10) {
+                  setForm({ ...form, shortDescription: e.target.value });
+                }
+              }}
+            />
+
+            <p className="text-xs text-gray-400">
+              Max 10 words
+            </p>
+
+            {errors.shortDescription && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.shortDescription}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Description <span className="text-red-500">*</span>
+            </label>
+
+            <textarea
+              rows={6}
+              className={`input-style w-full ${errors.fullDescription ? "border-red-500" : ""}`}
+              value={form.fullDescription}
+              onChange={(e) =>
+                setForm({ ...form, fullDescription: e.target.value })
+              }
+            />
+
+            <p className="text-xs text-gray-400">
+              Minimum 50 words
+            </p>
+
+            {errors.fullDescription && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.fullDescription}
+              </p>
+            )}
+          </div>
 
           {/* ADDRESS + PINCODE + YOUTUBE */}
           <div className="grid md:grid-cols-3 gap-6">
-            <input
-              placeholder="Address"
-              className="input-style"
-              value={form.address}
-              onChange={(e) =>
-                setForm({ ...form, address: e.target.value })
-              }
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Address <span className="text-red-500">*</span>
+              </label>
 
-            <input
-              placeholder="Pincode"
-              className="input-style"
-              value={form.pincode}
-              onChange={(e) =>
-                setForm({ ...form, pincode: e.target.value })
-              }
-            />
+              <input
+                className={`input-style w-full ${errors.address ? "border-red-500" : ""}`}
+                value={form.address}
+                onChange={(e) =>
+                  setForm({ ...form, address: e.target.value })
+                }
+              />
+
+              {errors.address && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.address}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Pincode <span className="text-red-500">*</span>
+              </label>
+
+              <input
+                className={`input-style w-full ${errors.pincode ? "border-red-500" : ""}`}
+                value={form.pincode}
+                onChange={(e) =>
+                  setForm({ ...form, pincode: e.target.value })
+                }
+              />
+
+              {errors.pincode && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.pincode}
+                </p>
+              )}
+            </div>
 
             <input
               placeholder="YouTube Video URL"
@@ -319,23 +451,45 @@ export const CreateDestinationPage: React.FC = () => {
 
           {/* LAT LONG */}
           <div className="grid md:grid-cols-2 gap-6">
-            <input
-              placeholder="Latitude"
-              className="input-style"
-              value={form.latitude}
-              onChange={(e) =>
-                setForm({ ...form, latitude: e.target.value })
-              }
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Latitude <span className="text-red-500">*</span>
+              </label>
 
-            <input
-              placeholder="Longitude"
-              className="input-style"
-              value={form.longitude}
-              onChange={(e) =>
-                setForm({ ...form, longitude: e.target.value })
-              }
-            />
+              <input
+                className={`input-style w-full ${errors.latitude ? "border-red-500" : ""}`}
+                value={form.latitude}
+                onChange={(e) =>
+                  setForm({ ...form, latitude: e.target.value })
+                }
+              />
+
+              {errors.latitude && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.latitude}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Longitude <span className="text-red-500">*</span>
+              </label>
+
+              <input
+                className={`input-style w-full ${errors.longitude ? "border-red-500" : ""}`}
+                value={form.longitude}
+                onChange={(e) =>
+                  setForm({ ...form, longitude: e.target.value })
+                }
+              />
+
+              {errors.longitude && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.longitude}
+                </p>
+              )}
+            </div>
           </div>
 
           <p className="text-xs text-gray-500 flex items-center gap-1">
@@ -384,6 +538,11 @@ export const CreateDestinationPage: React.FC = () => {
               </label>
             )}
           </section>
+          {errors.images && (
+            <p className="text-red-500 text-xs mt-2">
+              {errors.images}
+            </p>
+          )}
 
           {/* SUBMIT */}
           <div className="flex justify-end pt-6 border-t">
