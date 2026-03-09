@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapPin, Check, X } from "lucide-react";
+import { MapPin} from "lucide-react";
 import toast from "react-hot-toast";
 import {
   fetchAdminDestinations
