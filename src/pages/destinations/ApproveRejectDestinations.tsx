@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { MapPin, Check, X } from "lucide-react";
 import toast from "react-hot-toast";
 import {
-  approveDestination,
-  fetchAdminDestinations,
-  rejectDestination,
+  fetchAdminDestinations
 } from "../../services/adminDestinationApi";
 import { getAllCountries } from "../../services/countryApi";
 import { getStatesByCountry } from "../../services/stateApi";
@@ -93,24 +91,7 @@ export const ApproveRejectDestinations: React.FC = () => {
     loadDestinations();
   }, [status, page, countryId, stateId]);
 
-  /* ================= APPROVE ================= */
 
-  const handleApprove = async (id: number) => {
-    await approveDestination(id);
-    toast.success("Approved");
-    loadDestinations();
-  };
-
-  /* ================= REJECT ================= */
-
-  const handleReject = async (id: number) => {
-    const reason = prompt("Enter rejection reason:");
-    if (!reason) return;
-
-    await rejectDestination(id, reason);
-    toast.success("Rejected");
-    loadDestinations();
-  };
 
   return (
     <section className="py-10 bg-gray-100 min-h-screen">
@@ -314,30 +295,6 @@ export const ApproveRejectDestinations: React.FC = () => {
                   <p className="text-sm mt-3 text-gray-700">
                     {d.shortDescription}
                   </p>
-
-                  {status === "PENDING" && (
-                    <div className="flex gap-3 mt-5">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApprove(d.id);
-                        }}
-                        className="flex-1 bg-green-600 text-white py-2 rounded-xl hover:scale-105 transition"
-                      >
-                        <Check className="inline w-4 h-4" /> Approve
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleReject(d.id);
-                        }}
-                        className="flex-1 bg-red-600 text-white py-2 rounded-xl hover:scale-105 transition"
-                      >
-                        <X className="inline w-4 h-4" /> Reject
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}

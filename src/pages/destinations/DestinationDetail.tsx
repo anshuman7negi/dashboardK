@@ -25,10 +25,10 @@ export const DestinationDetail = () => {
     const [activeImage, setActiveImage] =
         useState<string | null>(null);
 
-    // const { weather } = useWeather(
-    // destination?.latitude,
-    // destination?.longitude
-    // );
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
+    const [processing, setProcessing] = useState(false);
+
 
     useEffect(() => {
         if (!id) return;
@@ -52,23 +52,50 @@ export const DestinationDetail = () => {
 
         if (!destination) return;
 
-        await approveDestination(destination.id);
+        try {
 
-        toast.success("Destination Approved");
+            setProcessing(true);
+
+            await approveDestination(destination.id);
+
+            toast.success("Destination successfully approved");
+
+        } catch (err: any) {
+
+            toast.error(err?.message || "Approval failed");
+
+        } finally {
+
+            setProcessing(false);
+
+        }
 
     };
 
     const handleReject = async () => {
 
-        if (!destination) return;
+        if (!destination || !rejectReason.trim()) return;
 
-        const reason = prompt("Enter rejection reason");
+        try {
 
-        if (!reason) return;
+            setProcessing(true);
 
-        await rejectDestination(destination.id, reason);
+            await rejectDestination(destination.id, rejectReason);
 
-        toast.success("Destination Rejected");
+            toast.success("Destination rejected");
+
+            setShowRejectModal(false);
+            setRejectReason("");
+
+        } catch (err: any) {
+
+            toast.error(err?.message || "Rejection failed");
+
+        } finally {
+
+            setProcessing(false);
+
+        }
 
     };
 
@@ -336,13 +363,93 @@ export const DestinationDetail = () => {
                 </button>
 
                 <button
-                    onClick={handleReject}
+                    onClick={() => setShowRejectModal(true)}
                     className="px-6 py-3 bg-red-600 text-white rounded-xl hover:scale-105 transition"
                 >
 
                     Reject
 
                 </button>
+
+                {showRejectModal && (
+
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+                        <div className="w-[420px] bg-white rounded-3xl shadow-2xl p-7 animate-[fadeIn_.2s_ease]">
+
+                            <h2 className="text-xl font-semibold text-gray-800 mb-1">
+                                Reject Destination
+                            </h2>
+
+                            <p className="text-sm text-gray-500 mb-4">
+                                Provide a reason for rejecting this destination.
+                            </p>
+
+                            <textarea
+                                placeholder="Write rejection remark..."
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                className="
+            w-full
+            border
+            border-gray-200
+            focus:border-red-500
+            focus:ring-2
+            focus:ring-red-100
+            rounded-xl
+            p-3
+            text-sm
+            outline-none
+            transition
+            resize-none
+            mb-6
+            "
+                                rows={4}
+                            />
+
+                            <div className="flex justify-end gap-3">
+
+                                <button
+                                    onClick={() => setShowRejectModal(false)}
+                                    className="
+                px-5 py-2
+                text-sm
+                rounded-xl
+                border
+                border-gray-200
+                hover:bg-gray-100
+                transition
+                "
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    onClick={handleReject}
+                                    disabled={processing}
+                                    className="
+                px-5 py-2
+                text-sm
+                rounded-xl
+                text-white
+                bg-red-600
+                hover:bg-red-700
+                shadow-md
+                hover:shadow-lg
+                transition
+                disabled:opacity-50
+                "
+                                >
+                                    {processing ? "Rejecting..." : "Reject"}
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                )}
 
             </div>
 
@@ -352,7 +459,48 @@ export const DestinationDetail = () => {
             <DestinationReviews destinationId={destination.id} />
         )}
 
+        {destination.status === "REJECTED" && destination.adminRemark && (
+
+            <div className="mt-8">
+
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-5 shadow-sm">
+
+                    <div className="flex items-start gap-3">
+
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 text-red-600 font-bold">
+                            !
+                        </div>
+
+                        <div>
+
+                            <h3 className="text-red-700 font-semibold text-lg">
+                                Destination Rejected
+                            </h3>
+
+                            <p className="text-sm text-red-600 mt-1">
+                                This destination submission was rejected by the admin.
+                            </p>
+
+                            <div className="mt-3 bg-white border border-red-100 rounded-xl p-3 text-sm text-gray-700 leading-relaxed">
+
+                                {destination.adminRemark}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        )}
+
     </div>
 
     );
 };
+
+
+
