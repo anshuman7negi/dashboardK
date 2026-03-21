@@ -25,6 +25,8 @@ import { ApproveRejectDestinations } from "../pages/destinations/ApproveRejectDe
 import { CreateDestinationPage } from "../pages/destinations/CreateDestinationPage";
 import CreateDestinationCategoryPage from "../pages/destinations/CreateDestinationCategoryPage";
 import { DestinationDetail } from "../pages/destinations/DestinationDetail";
+import { ApproveRejectEvents } from "../pages/destinations/ApproveRejectEvents";
+import { EventDetail } from "../pages/destinations/EventDetail";
 
 export const router = createBrowserRouter([
   {
@@ -97,10 +99,28 @@ export const router = createBrowserRouter([
       },
 
       {
+        path: "approve-reject-events",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
+            <ApproveRejectEvents />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
         path: "destination/:id",
         element: (
           <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <DestinationDetail />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "event/:id",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
+            <EventDetail />
           </ProtectedRoute>
         ),
       },
