@@ -27,6 +27,8 @@ import CreateDestinationCategoryPage from "../pages/destinations/CreateDestinati
 import { DestinationDetail } from "../pages/destinations/DestinationDetail";
 import { ApproveRejectEvents } from "../pages/destinations/ApproveRejectEvents";
 import { EventDetail } from "../pages/destinations/EventDetail";
+import { KycCenterPage } from "../pages/Kyc/KycCenterPage";
+import { KycDetailPage } from "../pages/Kyc/KycDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -167,6 +169,34 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
             <RolePermissionMappingPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "verify-kyc",
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              "ROLE_ADMIN",
+              "ROLE_SUPPORT_ADMIN"
+            ]}
+          >
+            <KycCenterPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "kyc/:id",
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              "ROLE_ADMIN",
+              "ROLE_SUPPORT_ADMIN"
+            ]}
+          >
+            <KycDetailPage />
           </ProtectedRoute>
         ),
       },

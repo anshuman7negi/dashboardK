@@ -92,6 +92,18 @@ const AdminLayout = () => {
             </DropdownMenu>
           )}
 
+          {/* Manage KYC */}
+          {role === "ROLE_ADMIN" && (
+            <DropdownMenu
+              label="Approval Center"
+              icon={<Shield size={18} />}
+              isOpen={openMenu === "kyc"}
+              toggle={() => toggleMenu("kyc")}
+            >
+              <SubItem to="/admin/verify-kyc" label="KYC Center" />
+            </DropdownMenu>
+          )}
+
           {/* Destinations */}
           <DropdownMenu
             label="Manage Destinations"
