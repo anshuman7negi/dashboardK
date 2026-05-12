@@ -3,7 +3,8 @@ import { clearAccessToken, getAccessToken, setAccessToken } from "../utils/token
 
 const api = axios.create({
   //baseURL: "http://krowdless-backend-env-1.eba-maspqfky.ap-south-1.elasticbeanstalk.com/",
-  baseURL: "http://localhost:8080",
+  //baseURL: "http://localhost:8080",
+  baseURL:"https://api.krowdless.com/",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -31,7 +32,8 @@ api.interceptors.response.use(
       try {
         const res = await axios.post(
           //"http://krowdless-backend-env-1.eba-maspqfky.ap-south-1.elasticbeanstalk.com/",
-          "http://localhost:8080/api/v1/auth/refresh",
+          //"http://localhost:8080/api/v1/auth/refresh",
+            "https://api.krowdless.com/",
           {},
           { withCredentials: true }
         );
