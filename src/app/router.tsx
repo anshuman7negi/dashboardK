@@ -29,6 +29,8 @@ import { ApproveRejectEvents } from "../pages/destinations/ApproveRejectEvents";
 import { EventDetail } from "../pages/destinations/EventDetail";
 import { KycCenterPage } from "../pages/Kyc/KycCenterPage";
 import { KycDetailPage } from "../pages/Kyc/KycDetailPage";
+import { TravelPackagesCenterPage } from "../pages/travelPackages/TravelPackagesCenterPage";
+import { TravelPackageDetailPage } from "../pages/travelPackages/TravelPackageDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -197,6 +199,34 @@ export const router = createBrowserRouter([
             ]}
           >
             <KycDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+      
+      {
+        path: "/admin/travel-packages/:id",
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              "ROLE_ADMIN",
+              "ROLE_SUPPORT_ADMIN"
+            ]}
+          >
+            <TravelPackageDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "verify-travel-package",
+        element: (
+          <ProtectedRoute
+            allowedRoles={[
+              "ROLE_ADMIN",
+              "ROLE_SUPPORT_ADMIN"
+            ]}
+          >
+            <TravelPackagesCenterPage />
           </ProtectedRoute>
         ),
       },

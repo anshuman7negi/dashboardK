@@ -100,7 +100,8 @@ const AdminLayout = () => {
               isOpen={openMenu === "kyc"}
               toggle={() => toggleMenu("kyc")}
             >
-              <SubItem to="/admin/verify-kyc" label="KYC Center" />
+              <SubItem to="/admin/verify-kyc" label="KYC Center" /> 
+              <SubItem to="/admin/verify-travel-package" label="Travel Package Center" /> 
             </DropdownMenu>
           )}
 
