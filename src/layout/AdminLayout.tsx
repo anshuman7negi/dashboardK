@@ -80,7 +80,7 @@ const AdminLayout = () => {
           {/* Manage Roles */}
           {role === "ROLE_ADMIN" && (
             <DropdownMenu
-              label="Manage Roles"
+              label="Manage System"
               icon={<Shield size={18} />}
               isOpen={openMenu === "roles"}
               toggle={() => toggleMenu("roles")}
@@ -89,6 +89,7 @@ const AdminLayout = () => {
               <SubItem to="/admin/create-permission" label="Create Permission" />
               <SubItem to="/admin/user-role-map" label="User Role Mapping" />
               <SubItem to="/admin/role-permission-map" label="Role Permission Mapping" />
+              <SubItem to="/admin/manage-rewards" label="Manage Rewards" />
             </DropdownMenu>
           )}
 

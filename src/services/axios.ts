@@ -1,41 +1,55 @@
 import axios from "axios";
-import { clearAccessToken, getAccessToken, setAccessToken } from "../utils/tokenStore";
+import {
+  clearAccessToken,
+  getAccessToken,
+  setAccessToken,
+} from "../utils/tokenStore";
 
 const api = axios.create({
-  //baseURL: "http://krowdless-backend-env-1.eba-maspqfky.ap-south-1.elasticbeanstalk.com/",
- // baseURL: "http://localhost:8080",
-  baseURL:"https://api.krowdless.com/",
+  baseURL: "https://api.krowdless.com/",
+  // baseURL: "http://localhost:8080",
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
-// Attach access token
+// ================= REQUEST INTERCEPTOR =================
+
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token && config.headers) {
+
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // FormData ke liye browser khud Content-Type set karega
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  } else {
+    config.headers["Content-Type"] = "application/json";
+  }
+
   return config;
 });
 
-// Auto Refresh
+// ================= RESPONSE INTERCEPTOR =================
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
 
       try {
         const res = await axios.post(
-          //"http://krowdless-backend-env-1.eba-maspqfky.ap-south-1.elasticbeanstalk.com/",
-          //"http://localhost:8080/api/v1/auth/refresh",
-            "https://api.krowdless.com/",
+          "https://api.krowdless.com/api/v1/auth/refresh",
           {},
-          { withCredentials: true }
+          {
+            withCredentials: true,
+          }
         );
 
         const newAccessToken = res.data.data.accessToken;

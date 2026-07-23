@@ -31,6 +31,7 @@ import { KycCenterPage } from "../pages/Kyc/KycCenterPage";
 import { KycDetailPage } from "../pages/Kyc/KycDetailPage";
 import { TravelPackagesCenterPage } from "../pages/travelPackages/TravelPackagesCenterPage";
 import { TravelPackageDetailPage } from "../pages/travelPackages/TravelPackageDetailPage";
+import ManageRewardsPage from "../pages/rewards/ManageRewardsPage";
 
 export const router = createBrowserRouter([
   {
@@ -176,14 +177,18 @@ export const router = createBrowserRouter([
       },
 
       {
+        path: "manage-rewards",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+            <ManageRewardsPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
         path: "verify-kyc",
         element: (
-          <ProtectedRoute
-            allowedRoles={[
-              "ROLE_ADMIN",
-              "ROLE_SUPPORT_ADMIN"
-            ]}
-          >
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <KycCenterPage />
           </ProtectedRoute>
         ),
@@ -192,26 +197,16 @@ export const router = createBrowserRouter([
       {
         path: "kyc/:id",
         element: (
-          <ProtectedRoute
-            allowedRoles={[
-              "ROLE_ADMIN",
-              "ROLE_SUPPORT_ADMIN"
-            ]}
-          >
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <KycDetailPage />
           </ProtectedRoute>
         ),
       },
-      
+
       {
         path: "/admin/travel-packages/:id",
         element: (
-          <ProtectedRoute
-            allowedRoles={[
-              "ROLE_ADMIN",
-              "ROLE_SUPPORT_ADMIN"
-            ]}
-          >
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <TravelPackageDetailPage />
           </ProtectedRoute>
         ),
@@ -220,12 +215,7 @@ export const router = createBrowserRouter([
       {
         path: "verify-travel-package",
         element: (
-          <ProtectedRoute
-            allowedRoles={[
-              "ROLE_ADMIN",
-              "ROLE_SUPPORT_ADMIN"
-            ]}
-          >
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <TravelPackagesCenterPage />
           </ProtectedRoute>
         ),
