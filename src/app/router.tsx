@@ -32,6 +32,8 @@ import { KycDetailPage } from "../pages/Kyc/KycDetailPage";
 import { TravelPackagesCenterPage } from "../pages/travelPackages/TravelPackagesCenterPage";
 import { TravelPackageDetailPage } from "../pages/travelPackages/TravelPackageDetailPage";
 import ManageRewardsPage from "../pages/rewards/ManageRewardsPage";
+import StayKycCenterPage from "../pages/stayKyc/StayKycCenterPage";
+import StayKycDetailPage from "../pages/stayKyc/StayKycDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -190,6 +192,24 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <KycCenterPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "verify-stay-kyc",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
+            <StayKycCenterPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path:"/admin/stay-kyc/:id",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
+            <StayKycDetailPage />
           </ProtectedRoute>
         ),
       },
