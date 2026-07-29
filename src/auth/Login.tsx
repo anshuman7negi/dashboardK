@@ -34,6 +34,7 @@ const Login = () => {
         setAccessToken(accessToken); // 🔥 memory only
       }
 
+
       const roles = response.data.role ?? [];
 
       if (accessToken) {
@@ -42,14 +43,17 @@ const Login = () => {
 
       localStorage.setItem("roles", JSON.stringify(roles));
 
-      if (
-        roles.includes("ROLE_ADMIN") ||
-        roles.includes("ROLE_SUPPORT_ADMIN")
-      ) {
+      if (roles.includes("ROLE_ADMIN")) {
+        localStorage.setItem("role", "ROLE_ADMIN");
+        navigate("/admin");
+      } else if (roles.includes("ROLE_SUPPORT_ADMIN")) {
+        localStorage.setItem("role", "ROLE_SUPPORT_ADMIN");
         navigate("/admin");
       } else if (roles.includes("ROLE_AGENT")) {
+        localStorage.setItem("role", "ROLE_AGENT");
         navigate("/agent");
       } else if (roles.includes("ROLE_STAY_HOST")) {
+        localStorage.setItem("role", "ROLE_STAY_HOST");
         navigate("/host");
       } else {
         setError("Invalid role received from server");
