@@ -144,7 +144,7 @@ export const fetchTravelPackageDetail =
   ): Promise<TravelPackageDetailResponse> => {
 
     const response = await api.get(
-      `/api/v1/travel-packages/${id}`
+      `/api/v1/admin/travel-packages/${id}`
     );
 
     return response.data.data;

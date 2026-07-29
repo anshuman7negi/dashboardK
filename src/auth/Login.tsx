@@ -34,18 +34,26 @@ const Login = () => {
         setAccessToken(accessToken); // 🔥 memory only
       }
 
-      const role = roleArray?.[0];
+      const roles = response.data.role ?? [];
 
-      localStorage.setItem("role", role);
+      if (accessToken) {
+        setAccessToken(accessToken);
+      }
 
-      if (role === "ROLE_ADMIN" || role === "ROLE_SUPPORT_ADMIN") {
+      localStorage.setItem("roles", JSON.stringify(roles));
+
+      if (
+        roles.includes("ROLE_ADMIN") ||
+        roles.includes("ROLE_SUPPORT_ADMIN")
+      ) {
         navigate("/admin");
-      } else if (role === "ROLE_AGENT") {
+      } else if (roles.includes("ROLE_AGENT")) {
         navigate("/agent");
+      } else if (roles.includes("ROLE_STAY_HOST")) {
+        navigate("/host");
       } else {
         setError("Invalid role received from server");
       }
-
     } catch (err: any) {
       setError(err?.response?.data?.message || "Invalid email or password");
     } finally {
@@ -55,10 +63,8 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
-
       {/* LEFT SIDE BRANDING */}
       <div className="hidden md:flex relative w-1/2 bg-gradient-to-br from-orange-500 to-pink-500 text-white overflow-hidden">
-
         {/* Animated Background Pattern */}
         <div className="absolute inset-0 rotate-[-20deg] scale-150 opacity-10 pointer-events-none">
           {Array.from({ length: 12 }).map((_, row) => (
@@ -67,23 +73,21 @@ const Login = () => {
               className="whitespace-nowrap animate-marquee"
               style={{ marginBottom: "40px" }}
             >
-              Krowdless &nbsp; Krowdless &nbsp; Krowdless &nbsp;
-              Krowdless &nbsp; Krowdless &nbsp; Krowdless &nbsp;
-              Krowdless &nbsp; Krowdless &nbsp; Krowdless
+              Krowdless &nbsp; Krowdless &nbsp; Krowdless &nbsp; Krowdless
+              &nbsp; Krowdless &nbsp; Krowdless &nbsp; Krowdless &nbsp;
+              Krowdless &nbsp; Krowdless
             </div>
           ))}
         </div>
 
         {/* Foreground Content */}
         <div className="relative z-10 p-12 flex flex-col justify-center">
-          <h1 className="text-5xl font-extrabold mb-6">
-            Welcome Back
-          </h1>
+          <h1 className="text-5xl font-extrabold mb-6">Welcome Back</h1>
 
           <p className="text-lg leading-relaxed mb-6">
-            Manage your travel business with complete control.
-            Packages, employees, approvals, revenue —
-            everything in one powerful dashboard.
+            Manage your travel business with complete control. Packages,
+            employees, approvals, revenue — everything in one powerful
+            dashboard.
           </p>
 
           <ul className="space-y-3 text-sm">
@@ -98,7 +102,6 @@ const Login = () => {
       {/* RIGHT SIDE FORM */}
       <div className="flex w-full md:w-1/2 items-center justify-center bg-gray-100 p-8">
         <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg">
-
           <h2 className="text-2xl font-bold mb-6 text-center">
             Login to your account
           </h2>
@@ -110,7 +113,6 @@ const Login = () => {
           )}
 
           <form onSubmit={handleLogin}>
-
             <input
               type="email"
               placeholder="Enter email"
@@ -145,22 +147,16 @@ const Login = () => {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
-
           </form>
 
           <p className="text-sm text-center mt-6 text-gray-600">
             Don't have an account?{" "}
-            <Link
-              to="/signup"
-              className="text-orange-500 font-medium"
-            >
+            <Link to="/signup" className="text-orange-500 font-medium">
               Sign Up
             </Link>
           </p>
-
         </div>
       </div>
-
     </div>
   );
 };
