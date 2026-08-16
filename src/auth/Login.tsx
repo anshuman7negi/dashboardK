@@ -51,10 +51,10 @@ const Login = () => {
         navigate("/admin");
       } else if (roles.includes("ROLE_AGENT")) {
         localStorage.setItem("role", "ROLE_AGENT");
-        navigate("/agent");
+        navigate("/admin");
       } else if (roles.includes("ROLE_STAY_HOST")) {
         localStorage.setItem("role", "ROLE_STAY_HOST");
-        navigate("/host");
+        navigate("/admin");
       } else {
         setError("Invalid role received from server");
       }
