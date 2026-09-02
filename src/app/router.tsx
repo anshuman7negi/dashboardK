@@ -34,6 +34,8 @@ import { TravelPackageDetailPage } from "../pages/travelPackages/TravelPackageDe
 import ManageRewardsPage from "../pages/rewards/ManageRewardsPage";
 import StayKycCenterPage from "../pages/stayKyc/StayKycCenterPage";
 import StayKycDetailPage from "../pages/stayKyc/StayKycDetailPage";
+import ManageUsersPage from "../pages/ManageUsers/ManageUsersPage";
+import UserDetailPage from "../pages/ManageUsers/UserDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -161,6 +163,24 @@ export const router = createBrowserRouter([
       },
 
       {
+        path: "manage-users",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+            <ManageUsersPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "manage-users/:userId",
+        element: (
+          <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+            <UserDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+
+      {
         path: "create-permission",
         element: (
           <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -206,7 +226,7 @@ export const router = createBrowserRouter([
       },
 
       {
-        path:"/admin/stay-kyc/:id",
+        path: "/admin/stay-kyc/:id",
         element: (
           <ProtectedRoute allowedRoles={["ROLE_ADMIN", "ROLE_SUPPORT_ADMIN"]}>
             <StayKycDetailPage />

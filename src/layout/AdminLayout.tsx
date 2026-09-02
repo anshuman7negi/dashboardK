@@ -90,6 +90,7 @@ const AdminLayout = () => {
               <SubItem to="/admin/user-role-map" label="User Role Mapping" />
               <SubItem to="/admin/role-permission-map" label="Role Permission Mapping" />
               <SubItem to="/admin/manage-rewards" label="Manage Rewards" />
+              <SubItem to="/admin/manage-users" label="Manage Users" />
             </DropdownMenu>
           )}
 

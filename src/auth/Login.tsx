@@ -13,57 +13,79 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    if (!email || !password) {
-      setError("Please enter email and password");
+  if (!email || !password) {
+    setError("Please enter email and password");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const response = await loginUser(email, password);
+
+    console.log("LOGIN RESPONSE:", response);
+    console.log("ROLES FROM SERVER:", response?.data?.role);
+
+    const accessToken = response?.data?.accessToken;
+    const roles: string[] = response?.data?.role ?? [];
+
+    console.log("IS ADMIN:", roles.includes("ROLE_ADMIN"));
+
+    if (!accessToken) {
+      setError("Access token not received from server");
       return;
     }
 
-    try {
-      setLoading(true);
+    // Store access token
+    setAccessToken(accessToken);
 
-      const response = await loginUser(email, password);
+    // Store all roles
+    localStorage.setItem("roles", JSON.stringify(roles));
 
-      const accessToken = response.data.accessToken;
-      const roleArray = response.data.role;
-
-      if (accessToken) {
-        setAccessToken(accessToken); // 🔥 memory only
-      }
-
-
-      const roles = response.data.role ?? [];
-
-      if (accessToken) {
-        setAccessToken(accessToken);
-      }
-
-      localStorage.setItem("roles", JSON.stringify(roles));
-
-      if (roles.includes("ROLE_ADMIN")) {
-        localStorage.setItem("role", "ROLE_ADMIN");
-        navigate("/admin");
-      } else if (roles.includes("ROLE_SUPPORT_ADMIN")) {
-        localStorage.setItem("role", "ROLE_SUPPORT_ADMIN");
-        navigate("/admin");
-      } else if (roles.includes("ROLE_AGENT")) {
-        localStorage.setItem("role", "ROLE_AGENT");
-        navigate("/admin");
-      } else if (roles.includes("ROLE_STAY_HOST")) {
-        localStorage.setItem("role", "ROLE_STAY_HOST");
-        navigate("/admin");
-      } else {
-        setError("Invalid role received from server");
-      }
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Invalid email or password");
-    } finally {
-      setLoading(false);
+    // ADMIN
+    if (roles.includes("ROLE_ADMIN")) {
+      localStorage.setItem("role", "ROLE_ADMIN");
+      navigate("/admin");
+      return;
     }
-  };
+
+    // SUPPORT ADMIN
+    if (roles.includes("ROLE_SUPPORT_ADMIN")) {
+      localStorage.setItem("role", "ROLE_SUPPORT_ADMIN");
+      navigate("/admin");
+      return;
+    }
+
+    // TRAVEL AGENT
+    if (roles.includes("ROLE_TRAVEL_AGENT")) {
+      localStorage.setItem("role", "ROLE_TRAVEL_AGENT");
+      navigate("/admin");
+      return;
+    }
+
+    // STAY HOST
+    if (roles.includes("ROLE_STAY_HOST")) {
+      localStorage.setItem("role", "ROLE_STAY_HOST");
+      navigate("/admin");
+      return;
+    }
+
+    setError(`Invalid role received from server: ${roles.join(", ")}`);
+  } catch (err: any) {
+    console.error("LOGIN ERROR:", err);
+
+    setError(
+      err?.response?.data?.message ||
+      "Invalid email or password"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex">
